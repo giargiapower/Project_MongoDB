@@ -18,6 +18,9 @@ def clear_line(line):
     line = line.replace('URL', '')
     return line
 
+
+#dato il nome di un file che contiene i tweet mi dice a quale sentimento fanno riferimento questi tweet in modo tale
+# da poter fare l'analisi delle parole 
 def find_sentimento(name):
     if name.find("anger") != -1:
         return "anger"
