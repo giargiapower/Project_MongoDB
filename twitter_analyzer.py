@@ -1,3 +1,4 @@
+from ast import Break
 import glob
 import pymongo
 
@@ -25,10 +26,7 @@ def clear_line(line):
 client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mydb = client["db"]
 col_Hash = mydb["hashtags"]
-print(col_Hash)
 print("Connection Successful")
-for x in col_Hash.find({},{ "hashtag": "school"}):
-            print(x)
 
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 for file in list : 
@@ -36,8 +34,18 @@ for file in list :
         lines = f.read()
         clear_l = clear_line(lines)
         list_hashtags = extract_hashtags(clear_l)
-        
         #carica lista hashtags su MongoDB
+        for h in list_hashtags:
+            x = col_Hash.find_one({ "hashtag": h})
+            if x == None : 
+                mydict = { "hashtag": h, "counter": 1}
+                col_Hash.insert_one(mydict)
+            else :
+                myquery = { "hashtag": h}
+                newvalues = { "$set": { "counter": x["counter"]+1 } }
+                col_Hash.update_one(myquery, newvalues)
+
+
         
 
 
