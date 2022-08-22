@@ -1,4 +1,5 @@
 import glob
+import pymongo
 
 
 #estrazione hashtag
@@ -20,7 +21,14 @@ def clear_line(line):
 
 
 
-#connettiti a MongoDb
+#connessione a MongoDb
+client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+mydb = client["db"]
+col_Hash = mydb["hashtags"]
+print(col_Hash)
+print("Connection Successful")
+for x in col_Hash.find({},{ "hashtag": "school"}):
+            print(x)
 
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 for file in list : 
@@ -28,5 +36,10 @@ for file in list :
         lines = f.read()
         clear_l = clear_line(lines)
         list_hashtags = extract_hashtags(clear_l)
+        
         #carica lista hashtags su MongoDB
-        #chiedere se anche per hashtags e emoticonos bisogna usare tecnica map.reduce
+        
+
+
+
+client.close()
