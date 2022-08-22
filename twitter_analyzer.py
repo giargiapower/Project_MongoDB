@@ -27,13 +27,16 @@ client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mydb = client["db"]
 col_Hash = mydb["hashtags"]
 print("Connection Successful")
-
+#questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
+counter = 0
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 for file in list : 
     with open(file, 'r', encoding='utf-8') as f:
         lines = f.read()
         clear_l = clear_line(lines)
         list_hashtags = extract_hashtags(clear_l)
+        counter += len(list_hashtags)
+        print((counter/217428)*100 , "%")
         #carica lista hashtags su MongoDB
         for h in list_hashtags:
             x = col_Hash.find_one({ "hashtag": h})
@@ -44,10 +47,14 @@ for file in list :
                 myquery = { "hashtag": h}
                 newvalues = { "$set": { "counter": x["counter"]+1 } }
                 col_Hash.update_one(myquery, newvalues)
+        #elaborazione emojy e emoticons (credo vadano elaborate con map/reduce quindi credo che ciascuna emoji vada 
+        # salvata indipendentemente dalle altre, anche se si ripetono e poi quando vanno mostrate le word clouds si applica 
+        # il map reduce quindi per ogni sentimento estraggo tutte le emoji (map) e faccio il conto delle occorrenze di
+        # ciascuna emoji (reduce))
+    
 
 
         
-
 
 
 client.close()
