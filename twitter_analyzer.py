@@ -1,7 +1,8 @@
 from ast import Break
 import glob
 import pymongo
-
+import emojis
+import pyemoji
 
 #estrazione hashtag
 def extract_hashtags(line):
@@ -47,13 +48,20 @@ def find_sentimento(name):
 client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mydb = client["db"]
 col_Hash = mydb["hashtags"]
+col_emoji = mydb["emoji"]
+col_emoticons = mydb["emoticons"]
 print("Connection Successful")
 
 #questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
 counter = 0
 
 sentimento  = ""
+
+#path messaggi twitter , file emoji e file emoticons 
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
+lista_emoji = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoji/*.txt")
+lista_emoticons = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoticons/*.txt")
+
 for file in list : 
     sentimento = find_sentimento(file)
     with open(file, 'r', encoding='utf-8') as f:
@@ -62,6 +70,7 @@ for file in list :
         list_hashtags = extract_hashtags(clear_l)
         counter += len(list_hashtags)
         print((counter/217428)*100 , "%")
+
         #carica lista hashtags su MongoDB
         for h in list_hashtags:
             x = col_Hash.find_one({ "hashtag": h})
@@ -72,11 +81,46 @@ for file in list :
                 myquery = { "hashtag": h}
                 newvalues = { "$set": { "counter": x["counter"]+1 } }
                 col_Hash.update_one(myquery, newvalues)
+
+
         #elaborazione emojy e emoticons (credo vadano elaborate con map/reduce quindi credo che ciascuna emoji vada 
         # salvata indipendentemente dalle altre, anche se si ripetono e poi quando vanno mostrate le word clouds si applica 
         # il map reduce quindi per ogni sentimento estraggo tutte le emoji (map) e faccio il conto delle occorrenze di
         # ciascuna emoji (reduce))
-    
+        #EMOJI
+        new_list = emojis.get(lines)
+        for file_e in lista_emoji : 
+            with open(file_e, 'r', encoding='utf-8') as em:
+                l = em.read()
+                l = l.replace("u'\\" , "")
+                l = l.replace("'", "")
+                l = l.replace("\n", "")  
+                for x in new_list:
+                    encoded = x.encode('unicode-escape').decode('ASCII')
+                    temp = encoded.replace("\\", "")
+                    temp = temp.replace(" ", "")
+                    temp = temp.replace("f", "F")
+                    #print(temp,'\n')
+                    if l.find(temp) != -1:
+                        #salva elemento nel db
+                        mydict = { "emoji": x, "sentiment": sentimento}
+                        col_emoji.insert_one(mydict)
+        #EMOTICONS
+        for file_emot in lista_emoticons : 
+            with open(file_emot, 'r', encoding='utf-8') as emot:
+                l = emot.read()
+                l = l.replace('"' , '')
+                l = l.replace("'", "")
+                l = l.replace("\n", "") 
+                l = l.replace(" ", "")  
+                l = l.split(",")
+                for x in l:
+                    if lines.find(x) != -1:
+                        #salva elemento nel db
+                        mydict = { "emoticons": x, "sentiment": sentimento}
+                        col_emoticons.insert_one(mydict)      
+
+
 
 
         
