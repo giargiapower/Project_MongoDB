@@ -82,7 +82,7 @@ for file in list :
         print((counter/217428)*100 , "%")
         #pulizia hashtags trovati da testo
         clear_l = re.sub("#[A-Za-z0-9_]+","", clear_l)
-        print(clear_l)  
+        #print(clear_l)  
         #carica lista hashtags su MongoDB
         for h in list_hashtags:
              x = col_Hash.find_one({ "hashtag": h})
@@ -103,7 +103,7 @@ for file in list :
         #new_list = emojis.get(clear_l)
         new_list = extract_emojis(clear_l)
         new_list = [s for s in new_list if s != '\n']
-        print(new_list)
+        #print(new_list)
         for file_e in lista_emoji : 
            with open(file_e, 'r', encoding='utf-8') as em:
                 l = em.read()
@@ -143,8 +143,8 @@ for file in list :
         #TRATTAMENTO PUNTEGGIATURA E SOSTITUZIONE CON SPAZIO
         chars_to_remove = ['@', '[',',','?','!','.',';',':','\\','/','(',')','&','_','+','=','<','>','"',']',]
         clear_l = pulizia_testo(clear_l, chars_to_remove)
-    print(clear_l)
-    break
+    #print(clear_l)
+    #break
 
         
 
