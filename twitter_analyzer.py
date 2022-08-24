@@ -3,6 +3,10 @@ import glob
 import pymongo
 import emojis
 import pyemoji
+import re
+
+def extract_emojis(sentence):     
+    return [sentence[i] for i in range(len(sentence)) if str(sentence[i].encode('unicode-escape'))[2] == '\\' ]
 
 #estrazione hashtag
 def extract_hashtags(line):
@@ -40,6 +44,12 @@ def find_sentimento(name):
     elif name.find("trust") != -1:
         return "trust"
 
+#rimuove lista di caratteri da testo 
+def pulizia_testo(testo, chars_to_remove):
+    for c in chars_to_remove:
+        testo = testo.replace(c , " ")
+    return testo
+
 
 
 
@@ -70,14 +80,16 @@ for file in list :
         list_hashtags = extract_hashtags(clear_l)
         counter += len(list_hashtags)
         print((counter/217428)*100 , "%")
-
+        #pulizia hashtags trovati da testo
+        clear_l = re.sub("#[A-Za-z0-9_]+","", clear_l)
+        print(clear_l)  
         #carica lista hashtags su MongoDB
         for h in list_hashtags:
-            x = col_Hash.find_one({ "hashtag": h})
-            if x == None : 
+             x = col_Hash.find_one({ "hashtag": h})
+             if x == None : 
                 mydict = { "hashtag": h, "counter": 1}
                 col_Hash.insert_one(mydict)
-            else :
+             else :
                 myquery = { "hashtag": h}
                 newvalues = { "$set": { "counter": x["counter"]+1 } }
                 col_Hash.update_one(myquery, newvalues)
@@ -88,9 +100,12 @@ for file in list :
         # il map reduce quindi per ogni sentimento estraggo tutte le emoji (map) e faccio il conto delle occorrenze di
         # ciascuna emoji (reduce))
         #EMOJI
-        new_list = emojis.get(lines)
+        #new_list = emojis.get(clear_l)
+        new_list = extract_emojis(clear_l)
+        new_list = [s for s in new_list if s != '\n']
+        print(new_list)
         for file_e in lista_emoji : 
-            with open(file_e, 'r', encoding='utf-8') as em:
+           with open(file_e, 'r', encoding='utf-8') as em:
                 l = em.read()
                 l = l.replace("u'\\" , "")
                 l = l.replace("'", "")
@@ -103,8 +118,11 @@ for file in list :
                     #print(temp,'\n')
                     if l.find(temp) != -1:
                         #salva elemento nel db
-                        mydict = { "emoji": x, "sentiment": sentimento}
-                        col_emoji.insert_one(mydict)
+                       print("entrato")
+                       mydict = { "emoji": x, "sentiment": sentimento}
+                       col_emoji.insert_one(mydict)
+        #pulizia emoji da testo
+        clear_l = pulizia_testo(clear_l, new_list)
         #EMOTICONS
         for file_emot in lista_emoticons : 
             with open(file_emot, 'r', encoding='utf-8') as emot:
@@ -115,13 +133,18 @@ for file in list :
                 l = l.replace(" ", "")  
                 l = l.split(",")
                 for x in l:
-                    if lines.find(x) != -1:
+                    if clear_l.find(x) != -1:
                         #salva elemento nel db
                         mydict = { "emoticons": x, "sentiment": sentimento}
-                        col_emoticons.insert_one(mydict)      
-
-
-
+                        col_emoticons.insert_one(mydict)   
+                #pulizia emoticons da testo
+                clear_l = pulizia_testo(clear_l, l)  
+                  
+        #TRATTAMENTO PUNTEGGIATURA E SOSTITUZIONE CON SPAZIO
+        chars_to_remove = ['@', '[',',','?','!','.',';',':','\\','/','(',')','&','_','+','=','<','>','"',']',]
+        clear_l = pulizia_testo(clear_l, chars_to_remove)
+    print(clear_l)
+    break
 
         
 
