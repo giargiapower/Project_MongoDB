@@ -1,9 +1,11 @@
-from ast import Break
 import glob
+from tabnanny import process_tokens
 import pymongo
 import emojis
-import pyemoji
 import re
+import nltk
+import ast
+
 
 def extract_emojis(sentence):     
     return [sentence[i] for i in range(len(sentence)) if str(sentence[i].encode('unicode-escape'))[2] == '\\' ]
@@ -19,8 +21,8 @@ def extract_hashtags(line):
 
 #pulizia di URL e USERNAME 
 def clear_line(line):
-    line = line.replace('USERNAME', '')
-    line = line.replace('URL', '')
+    line = line.replace('USERNAME', ' ')
+    line = line.replace('URL', ' ')
     return line
 
 
@@ -50,6 +52,18 @@ def pulizia_testo(testo, chars_to_remove):
         testo = testo.replace(c , " ")
     return testo
 
+#crea dizionario di slang words 
+def crea_dict(text):
+    text = text.replace("\n", " ")
+    convertedDict = dict((x.replace(" '", "") , y.replace(" '", "")) for x, y in (element.split("':") for element in text.split("',")))
+    return convertedDict
+     
+#processa la lista di parole modificando gli acronimi e slang words nel loro significato completo
+def modify_slang_acr_words(lines, slang):
+    for x in slang :
+        y = x+' '
+        lines = lines.replace(y, slang[x])
+    return lines
 
 
 
@@ -60,7 +74,10 @@ mydb = client["db"]
 col_Hash = mydb["hashtags"]
 col_emoji = mydb["emoji"]
 col_emoticons = mydb["emoticons"]
+col_slang = mydb["slang"]
+col_acron = mydb["acronyms"]
 print("Connection Successful")
+
 
 #questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
 counter = 0
@@ -71,6 +88,7 @@ sentimento  = ""
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 lista_emoji = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoji/*.txt")
 lista_emoticons = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoticons/*.txt")
+
 
 for file in list : 
     sentimento = find_sentimento(file)
@@ -84,15 +102,15 @@ for file in list :
         clear_l = re.sub("#[A-Za-z0-9_]+","", clear_l)
         #print(clear_l)  
         #carica lista hashtags su MongoDB
-        for h in list_hashtags:
-             x = col_Hash.find_one({ "hashtag": h})
-             if x == None : 
-                mydict = { "hashtag": h, "counter": 1}
-                col_Hash.insert_one(mydict)
-             else :
-                myquery = { "hashtag": h}
-                newvalues = { "$set": { "counter": x["counter"]+1 } }
-                col_Hash.update_one(myquery, newvalues)
+       # for h in list_hashtags:
+       #      x = col_Hash.find_one({ "hashtag": h})
+       #      if x == None : 
+       #         mydict = { "hashtag": h, "counter": 1}
+       #         col_Hash.insert_one(mydict)
+       #      else :
+       #         myquery = { "hashtag": h}
+       #         newvalues = { "$set": { "counter": x["counter"]+1 } }
+       #         col_Hash.update_one(myquery, newvalues)
 
 
         #elaborazione emojy e emoticons (credo vadano elaborate con map/reduce quindi credo che ciascuna emoji vada 
@@ -118,9 +136,9 @@ for file in list :
                     #print(temp,'\n')
                     if l.find(temp) != -1:
                         #salva elemento nel db
-                       print("entrato")
+                       #print("entrato")
                        mydict = { "emoji": x, "sentiment": sentimento}
-                       col_emoji.insert_one(mydict)
+                      # col_emoji.insert_one(mydict)
         #pulizia emoji da testo
         clear_l = pulizia_testo(clear_l, new_list)
         #EMOTICONS
@@ -136,17 +154,25 @@ for file in list :
                     if clear_l.find(x) != -1:
                         #salva elemento nel db
                         mydict = { "emoticons": x, "sentiment": sentimento}
-                        col_emoticons.insert_one(mydict)   
+                       # col_emoticons.insert_one(mydict)   
                 #pulizia emoticons da testo
                 clear_l = pulizia_testo(clear_l, l)  
                   
         #TRATTAMENTO PUNTEGGIATURA E SOSTITUZIONE CON SPAZIO
         chars_to_remove = ['@', '[',',','?','!','.',';',':','\\','/','(',')','&','_','+','=','<','>','"',']',]
         clear_l = pulizia_testo(clear_l, chars_to_remove)
-    #print(clear_l)
-    #break
 
-        
+        #METTERE IL TESTO TUTTO IN LOWERCASE 
+        clear_l = clear_l.lower()
 
+        #PROCESSAMENTO SLANG WORDS E ACRONIMI
+        with open("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/slang_words.txt", 'r', encoding='utf-8') as em:
+            slang = em.read()
+            slang = crea_dict(slang)
+            clear_l = modify_slang_acr_words(clear_l, slang)
+            print(clear_l)
+        #SENTENCE TOKENIZATION
+        tokens = nltk.word_tokenize(clear_l)
+        #print(tokens)
 
 client.close()
