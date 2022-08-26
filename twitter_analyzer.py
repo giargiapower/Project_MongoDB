@@ -5,6 +5,9 @@ import emojis
 import re
 import nltk
 import ast
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+nltk.download('stopwords')
 
 
 def extract_emojis(sentence):     
@@ -77,7 +80,7 @@ col_emoticons = mydb["emoticons"]
 col_slang = mydb["slang"]
 col_acron = mydb["acronyms"]
 print("Connection Successful")
-
+lemmatizer = WordNetLemmatizer()
 
 #questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
 counter = 0
@@ -88,7 +91,6 @@ sentimento  = ""
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 lista_emoji = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoji/*.txt")
 lista_emoticons = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoticons/*.txt")
-
 
 for file in list : 
     sentimento = find_sentimento(file)
@@ -174,5 +176,16 @@ for file in list :
         #SENTENCE TOKENIZATION
         tokens = nltk.word_tokenize(clear_l)
         #print(tokens)
+
+        #TAGGING 
+        tagged = nltk.pos_tag(tokens)
+
+        #LEMMING 
+        tag_list = [(lemmatizer.lemmatize(x[0]) , x[1]) for x in tagged]
+        print(tag_list)
+
+        #ELIMINAZIONE STOP WORDS
+        tokens_without_sw = [word for word in tag_list if not word[0] in stopwords.words()]
+
 
 client.close()
