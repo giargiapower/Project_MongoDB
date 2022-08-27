@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import glob
 from tabnanny import process_tokens
 import pymongo
@@ -70,8 +72,6 @@ def modify_slang_acr_words(lines, slang):
     return lines
 
 
-
-
 #connessione a MongoDb
 client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mydb = client["db"]
@@ -84,6 +84,7 @@ col_tw_word = mydb["twitter"]
 print("Connection Successful")
 lemmatizer = WordNetLemmatizer()
 
+
 #questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
 counter = 0
 
@@ -93,6 +94,8 @@ sentimento  = ""
 list = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Twitter_messaggi/*.txt")
 lista_emoji = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoji/*.txt")
 lista_emoticons = glob.glob("C:/Users/giann/Desktop/UNITO/MAADB_lab/Risorse_lessicali/emoticons/*.txt")
+
+
 
 for file in list : 
     sentimento = find_sentimento(file)
@@ -139,7 +142,7 @@ for file in list :
                     temp = temp.replace("f", "F")
                     #print(temp,'\n')
                     if l.find(temp) != -1:
-                        #salva elemento nel db
+                       #salva elemento nel db
                        #print("entrato")
                        mydict = { "emoji": x, "sentiment": sentimento}
                       # col_emoji.insert_one(mydict)
