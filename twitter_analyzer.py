@@ -80,6 +80,7 @@ col_emoji = mydb["emoji"]
 col_emoticons = mydb["emoticons"]
 col_slang = mydb["slang"]
 col_acron = mydb["acronyms"]
+col_tw_word = mydb["twitter"]
 print("Connection Successful")
 lemmatizer = WordNetLemmatizer()
 
@@ -186,7 +187,9 @@ for file in list :
         list_freq = Counter([word[0] for word in tokens_without_sw])
         print(list_freq)
         #ADDING TO DICTIONARY 
-
+        for w in list_freq:
+            mydict = { "word": w, "frequency": list_freq[w], "sentiment" : sentimento}
+            col_tw_word.insert_one(mydict)
 
 
 client.close()
