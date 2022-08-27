@@ -164,7 +164,6 @@ for file in list :
         #TRATTAMENTO PUNTEGGIATURA E SOSTITUZIONE CON SPAZIO
         chars_to_remove = ['@', '[',',','?','!','.',';',':','\\','/','(',')','&','_','+','=','<','>','"',']',]
         clear_l = pulizia_testo(clear_l, chars_to_remove)
-
         #METTERE IL TESTO TUTTO IN LOWERCASE 
         clear_l = clear_l.lower()
 
@@ -173,26 +172,21 @@ for file in list :
             slang = em.read()
             slang = crea_dict(slang)
             clear_l = modify_slang_acr_words(clear_l, slang)
-            print(clear_l)
         #SENTENCE TOKENIZATION
         tokens = nltk.word_tokenize(clear_l)
-        #print(tokens)
 
         #TAGGING 
         tagged = nltk.pos_tag(tokens)
 
         #LEMMING 
         tag_list = [(lemmatizer.lemmatize(x[0]) , x[1]) for x in tagged]
-        print(tag_list)
-
         #ELIMINAZIONE STOP WORDS
-        tokens_without_sw = [word for word in tag_list if not word[0] in stopwords.words()]
-
+        tokens_without_sw = [word for word in tag_list if not word[0] in stopwords.words('english')]
         #FREQUENCY COUNTING 
         list_freq = Counter([word[0] for word in tokens_without_sw])
-
+        print(list_freq)
         #ADDING TO DICTIONARY 
-        
+
 
 
 client.close()
