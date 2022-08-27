@@ -5,6 +5,7 @@ import emojis
 import re
 import nltk
 import ast
+from collections import Counter
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 nltk.download('stopwords')
@@ -186,6 +187,12 @@ for file in list :
 
         #ELIMINAZIONE STOP WORDS
         tokens_without_sw = [word for word in tag_list if not word[0] in stopwords.words()]
+
+        #FREQUENCY COUNTING 
+        list_freq = Counter([word[0] for word in tokens_without_sw])
+
+        #ADDING TO DICTIONARY 
+        
 
 
 client.close()
