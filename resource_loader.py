@@ -25,5 +25,5 @@ for file in list :
                 #non vengono caricate le parole con _ come richiesto da requisiti
                 if w.find("_") == -1 :
                     mydict = { "word": w, "sentiment" : sentimento}
-                    col_Res.insert(mydict)
+                    col_Res.insert_one(mydict)
             
