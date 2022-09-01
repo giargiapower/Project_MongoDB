@@ -1,3 +1,6 @@
+from itertools import count
+from tkinter import Y
+from typing import List
 import pymongo
 from pymongo import MongoClient
 import matplotlib.pyplot as plt
@@ -95,12 +98,50 @@ for j in range(20):
 
 unique_string=(" ").join(temp_list)
 print(unique_string)
+#:\) :< :-\) :-\( :\( =\( :\* \^-\^ \[ \.-\. :\[ :3 :c \^\.\^ 8\) =\) :> :] =3 =]
 wordcloud = WordCloud(regexp = '(\:\w+\:|\<[\/\\]?3|[\(\)\\\D|\*\$][\-\^]?[\:\;\=]|[\:\;\=B8][\-\^]?[3DOPp\@\$\*\\\)\(\/\|])(?=\s|[\!\.\?]|$)').generate(unique_string)
 plt.figure(figsize=(15,8))
 plt.imshow(wordcloud)
 plt.axis("off")
 plt.savefig("C:/Users/giann/Desktop/emoticons"+".png", bbox_inches='tight')
 plt.close()
+
+
+
+# istogrammi 
+sentiment_rs = collection.aggregate([{"$match" : {"source" : "resources"}} , {"$group" : {"_id":"$sentiment", "count":{"$sum":1}}}])
+sentiment_tw = list(collection.aggregate([{"$match" : {"source" : "twitter"}} , {"$group" : {"_id":"$sentiment" }}]))
+list_rs = []
+list_tw = []
+statistics = [] 
+for i in list(sentiment_rs):
+    n_tot = i["count"]
+   # print(n_tot)
+    word_rs = list(collection.aggregate([{"$match" : {"source" : "resources", "sentiment" : i['_id']}}, {"$project" : {"_id" : 0 ,"word": 1}}]))
+    for k in word_rs : 
+        list_rs.append(k["word"])
+    for j in sentiment_tw:
+       # print(j)
+        word_tw = list(collection.aggregate([{"$match" : {"source" : "twitter", "sentiment" : j['_id']}}, {"$project" : {"_id" : 0 ,"word": 1}}]))
+        for k in word_tw : 
+            list_tw.append(k["word"])
+        intersection = [x for x in list_rs if x in list_tw]
+        #print(intersection)
+        n_intersection = len(intersection)
+        statistics.append([j['_id'], n_intersection/n_tot])
+        list_tw = []
+
+    x = [row[0] for row in statistics]
+    y = [row[1] for row in statistics]
+    plt.bar(x,y, align='center') # A bar chart
+    plt.ylim([0, 1])
+    plt.xlabel('Twitter')
+    plt.ylabel('perc_presence_lex_res')
+    plt.savefig("C:/Users/giann/Desktop/statistica"+ "_"+i['_id'] + ".png")
+    plt.close()
+    list_rs= []
+    statistics = []
+    
 
 
 
