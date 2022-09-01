@@ -143,6 +143,22 @@ for i in list(sentiment_rs):
     statistics = []
     
 
+#raccolta parole non presenti nelle risorse lessicali
+for i in list(sentiment_rs):
+    word_rs = list(collection.aggregate([{"$match" : {"source" : "resources", "sentiment" : i['_id']}}, {"$project" : {"_id" : 0 ,"word": 1}}]))
+    for k in word_rs : 
+        list_rs.append(k["word"])
+for j in sentiment_tw:
+    word_tw = list(collection.aggregate([{"$match" : {"source" : "twitter", "sentiment" : j['_id']}}, {"$project" : {"_id" : 0 ,"word": 1}}]))
+    for k in word_tw : 
+        list_tw.append(k["word"])
+    intersection = [x for x in list_tw if x not in list_rs]
+    with open(r'C:/Users/giann/Desktop/new_resources.txt', 'w') as fp:
+        fp.write(j['_id'] + ":" + "\n")
+        fp.write('\n'.join(intersection))
+
+
+
 
 
 client.close()
