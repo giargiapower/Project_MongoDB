@@ -122,6 +122,12 @@ try:
 
     cur.execute(create_script_emoji)
 
+    create_script_dictionary = ''' CREATE TABLE IF NOT EXISTS dictionary (
+                                            id  SERIAL PRIMARY KEY,
+                                            word     varchar(225) NOT NULL)'''
+
+    cur.execute(create_script_dictionary)
+
     # questo counter l'ho messo per vedere a che punto sono con i caricamenti degli hashtags
     counter = 0
 
@@ -217,7 +223,13 @@ try:
 
             # FREQUENCY COUNTING
             list_freq = Counter([word[0] for word in tokens_without_sw])
-            print(list_freq)
+            #print(list_freq)
+
+            # ADDING TO DICTIONARY
+            for w in list_freq:
+                insert_script = 'INSERT INTO dictionary (word) VALUES (%s)'
+                insert_value = w
+                cur.execute(insert_script, (insert_value,))
 
     conn.commit()
     print("Connection Successful")
