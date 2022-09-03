@@ -23,7 +23,8 @@ class EmojiCloud:
                                height=1000,
                                background_color='white',
                                random_state=42,
-                               collocations=False)
+                               collocations=False,
+                               contour_color='#023075',contour_width=3 ,colormap='rainbow')
     def color_func(self, word, font_size, position, orientation, random_state=None,
                    **kwargs):
         hue_saturation = '42, 88%'
@@ -58,23 +59,26 @@ collection = mydb["twitter"]
 emoji = mydb["emoji"]
 emoticon = mydb["emoticons"]
 # Visualizzare per ogni sentimento una word cloud con le parole maggiormente presenti nei tweet
-pipeline =[{"$match" : {"frequency" : {"$gt" : 30}}} , {"$group" : {"_id" : "$sentiment" ,  "projects": { "$addToSet": {"id" : "$sentiment" , "word" : "$word" , "frequency" : "$frequency" }}}}]
+#pipeline =[{"$match" : {"frequency" : {"$gt" : 30}}} , {"$group" : {"_id" : "$sentiment" ,  "projects": { "$addToSet": {"id" : "$sentiment" , "word" : "$word" , "frequency" : "$frequency" }}}}]
+pipeline = [{ "$match": { "frequency": { "$gt": 30 } } }, { "$sort" : { "frequency" : -1 } } ,
+  { "$group": { "_id": "$sentiment" , "items" : {"$push" : {"sentiment" : "$sentiment" , "word" : "$word" , "frequency" : "$frequency"}}}} , 
+  {"$project":{"items":{"$slice":["$items", 50]}}}]
 lista = list(collection.aggregate(pipeline))
 temp_list = []
 sens = ""
-for j in range(len(list)):
-    for i in (lista[j]["projects"]) :
-        sens = i['id']
+for j in range(len(lista)):
+    for i in (lista[j]["items"]) :
+        sens = i['sentiment']
         temp_list.append(i['word'])
     unique_string=(" ").join(temp_list)
-    wordcloud = WordCloud(width = 1000, height = 500).generate(unique_string)
+    wordcloud = WordCloud(width = 1000, height = 500, background_color='white', max_words=1000, contour_color='#023075',contour_width=3,colormap='rainbow').generate(unique_string)
     plt.figure(figsize=(15,8))
     plt.imshow(wordcloud)
     plt.axis("off")
-    plt.savefig("C:/Users/giann/Desktop/prova"+sens+".png", bbox_inches='tight')
+    plt.savefig("C:/Users/giann/Desktop/wordcloud_"+sens+".png", bbox_inches='tight')
    
     plt.close()
-temp_list = []
+    temp_list = []
 
 #wordcloud per emoji
 pipeline = [{ "$group": { "_id": "$emoji", "count": { "$sum": 1 }}}, {"$sort":{"count":-1}}]
@@ -93,13 +97,13 @@ temp_list = []
 pipeline = [{ "$group": { "_id": "$emoticons", "count": { "$sum": 1 }}}, {"$sort":{"count":-1}}]
 em = list(emoticon.aggregate(pipeline))
 for j in range(20):
-    print(em[j]["_id"])
+   # print(em[j]["_id"])
     temp_list.append(em[j]["_id"])
 
 unique_string=(" ").join(temp_list)
-print(unique_string)
+#print(unique_string)
 #:\) :< :-\) :-\( :\( =\( :\* \^-\^ \[ \.-\. :\[ :3 :c \^\.\^ 8\) =\) :> :] =3 =]
-wordcloud = WordCloud(regexp = '(\:\w+\:|\<[\/\\]?3|[\(\)\\\D|\*\$][\-\^]?[\:\;\=]|[\:\;\=B8][\-\^]?[3DOPp\@\$\*\\\)\(\/\|])(?=\s|[\!\.\?]|$)').generate(unique_string)
+wordcloud = WordCloud(regexp = '(\:\w+\:|\<[\/\\]?3|[\(\)\\\D|\*\$][\-\^]?[\:\;\=]|[\:\;\=B8][\-\^]?[3DOPp\@\$\*\\\)\(\/\|])(?=\s|[\!\.\?]|$)', background_color='white',contour_color='#023075',contour_width=3,colormap='rainbow').generate(unique_string)
 plt.figure(figsize=(15,8))
 plt.imshow(wordcloud)
 plt.axis("off")
