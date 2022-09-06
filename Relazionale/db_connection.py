@@ -115,13 +115,15 @@ try:
     cur.execute(create_script_sentiment)
 
     create_script_lexical_resource = ''' CREATE TABLE IF NOT EXISTS lexical_resource (
-                                                            words  varchar(300) PRIMARY KEY,
+                                                            words  varchar(300),
                                                             sentiments varchar (300),
+                                                            PRIMARY KEY (words,sentiments),
                                                             FOREIGN  KEY (sentiments) REFERENCES sentiment(sentiments))'''
     cur.execute(create_script_lexical_resource)
 
     create_script_twitter_message = ''' CREATE TABLE IF NOT EXISTS twitter_message (
-                                                    message    varchar(4000) PRIMARY KEY,
+                                                    id INTEGER PRIMARY KEY,
+                                                    message    varchar(4000),
                                                     sentiments varchar (300),
                                                     FOREIGN KEY (sentiments) REFERENCES sentiment(sentiments))'''
     cur.execute(create_script_twitter_message)
@@ -129,24 +131,25 @@ try:
     create_script_emoticon = ''' CREATE TABLE IF NOT EXISTS emoticon (
                                     id  SERIAL PRIMARY KEY,
                                     name     varchar(300) NOT NULL,
-                                    message varchar (300),
-                                    FOREIGN KEY (message) REFERENCES twitter_message(message))'''
+                                    message integer,
+                                    FOREIGN KEY (message) REFERENCES twitter_message(id))'''
 
     cur.execute(create_script_emoticon)
 
     create_script_emoji = ''' CREATE TABLE IF NOT EXISTS emoji (
                                         id  SERIAL PRIMARY KEY,
                                         name     varchar(300) NOT NULL,
-                                        message varchar(300),
-                                        FOREIGN KEY (message) REFERENCES twitter_message(message))'''
+                                        message integer,
+                                        FOREIGN KEY (message) REFERENCES twitter_message(id))'''
 
     cur.execute(create_script_emoji)
 
     create_script_word = ''' CREATE TABLE IF NOT EXISTS word (
                                             id  SERIAL PRIMARY KEY,
                                             words     varchar(300) NOT NULL,
-                                            message varchar(300),
-                                            FOREIGN KEY (message) REFERENCES twitter_message(message))'''
+                                            message integer,
+                                            frequency integer,
+                                            FOREIGN KEY (message) REFERENCES twitter_message(id))'''
 
     cur.execute(create_script_word)
 
@@ -156,7 +159,7 @@ try:
 
     sentimento = ""
 
-    i = " "
+    count_id = 0
 
     # path messaggi twitter
     list = glob.glob("C:\\Users\\berna\\Desktop\\Laurea magistrale\\MAADB\\pythonProject\\Twitter messaggi\\*.txt")
@@ -173,26 +176,16 @@ try:
 
 
         with open(os.path.join(os.getcwd(), file), 'r', encoding='utf-8') as f:
-            sent = find_sentimento(file)
+            #sent = find_sentimento(file)
             while True:
                 #twitter message
                 lines = f.readline()
-                sentimento = find_sentimento(file)
+                count_id = count_id +1
+                #sentimento = find_sentimento(file)
+                insert_script = 'INSERT INTO twitter_message (id, message, sentiments) VALUES (%s, %s, %s)'
+                insert_value = (count_id, lines, sentimento)
+                cur.execute(insert_script, (insert_value), )
 
-                insert_script= 'SELECT * FROM twitter_message WHERE message = %s'
-                cur.execute(insert_script, (lines,))
-                temp = cur.fetchone()
-                if temp == None:
-                    insert_script = 'INSERT INTO twitter_message (message, sentiments) VALUES (%s, %s)'
-                    insert_value = (lines, sentimento)
-                    cur.execute(insert_script, (insert_value), )
-                    conn.commit()
-                """else:
-                    lines = lines + i
-                    insert_script = 'INSERT INTO twitter_message (message, sentiments) VALUES (%s, %s)'
-                    insert_value = (lines, sentimento)
-                    cur.execute(insert_script, (insert_value), )
-                    conn.commit()"""
 
                 # HASHTAGS
                 clear_l = clear_line(lines)
@@ -224,7 +217,7 @@ try:
                     for record in new_list:
                         if record != -1:
                             insert_script = 'INSERT INTO emoji (name, message) VALUES (%s, %s)'
-                            insert_value = (record, lines)
+                            insert_value = (record, count_id)
                             cur.execute(insert_script, (insert_value),)
                 # pulizia emoji da testo
                 clear_l = pulizia_testo(clear_l, new_list)
@@ -241,7 +234,7 @@ try:
                     for record in l:
                         if record != -1:
                             insert_script = 'INSERT INTO emoticon (name, message) VALUES (%s, %s)'
-                            insert_value = (record, lines)
+                            insert_value = (record, count_id)
                             cur.execute(insert_script, (insert_value),)
                 # pulizia emoticons da testo
                 clear_l = pulizia_testo(clear_l, l)
@@ -278,13 +271,12 @@ try:
     
                 # ADDING TO DICTIONARY
                 for w in list_freq:
-                    insert_script = 'INSERT INTO word (words, message) VALUES (%s, %s)'
-                    insert_value = (w, lines)
+                    insert_script = 'INSERT INTO word (words, message, frequency) VALUES (%s, %s, %s)'
+                    insert_value = (w, count_id, list_freq[w])
                     cur.execute(insert_script, (insert_value),)
 
                 if not lines:
                     break
-
     conn.commit()
     print("Connection Successful")
 
