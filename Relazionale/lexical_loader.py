@@ -7,7 +7,8 @@ import glob
 
 def estrai_sentimento(file):
     file = file.split("\\")
-    return file[1].lower()
+    print(file)
+    return file[8].lower()
 
 
 """configuazione standard di connessione, user e pwd sono le mie"""
@@ -38,15 +39,27 @@ try:
         if file.find("emoji") == -1 & file.find("emoticons") == -1:
             with open(file, 'r', encoding='utf-8') as f:
                 sentimento = estrai_sentimento(file)
+                insert_script = 'SELECT * FROM sentiment WHERE sentiments = %s '
+                cur.execute(insert_script, (sentimento,))
+                temp = cur.fetchone()
+                if temp == None:
+                    insert_script = 'INSERT INTO sentiment (sentiments) VALUES (%s)'
+                    insert_value = (sentimento)
+                    cur.execute(insert_script, (insert_value,) )
+                    conn.commit()
+                #print(sentimento)
                 lines = f.read()
                 words = lines.split()
                 for w in words:
                     if w.find("_") == -1:
-                        insert_script = 'INSERT INTO lexical_resource (words, sentiments) VALUES (%s, %s)'
-                        insert_value = (w, sentimento)
-                        cur.execute(insert_script, (insert_value),)
-
-    conn.commit()
+                        insert_script = 'SELECT * FROM lexical_resource WHERE words = %s AND sentiments = %s '
+                        cur.execute(insert_script, (w, sentimento,))
+                        temp = cur.fetchone()
+                        if temp == None:
+                            insert_script = 'INSERT INTO lexical_resource (words, sentiments) VALUES (%s, %s)'
+                            insert_value = (w, sentimento)
+                            cur.execute(insert_script, (insert_value),)
+                            conn.commit()
     print("Connection Successful")
 
 
