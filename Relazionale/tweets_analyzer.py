@@ -156,33 +156,31 @@ try:
     temp_rs = cur.fetchall()
     #print(temp_rs)
 
-    #fare il conteggio
-
-
-       
     create_script_tw = 'SELECT word.words, twitter_message.sentiments FROM word join  twitter_message on word.message = twitter_message.id '
     cur.execute(create_script_tw)
     temp_tw = cur.fetchall()
     #print(temp_tw)
+
     statistics = []
 
     x_tw = []
 
     sentimento_rs = np.unique([x[1] for x in temp_rs[:]])
     sentimento_tw = np.unique([x[1] for x in temp_tw[:]])
-    #print(sentimento_tw)
+    print(sentimento_tw)
+    print(sentimento_rs)
 
     for i in sentimento_rs:
         temp_list_rs = [p for p in temp_rs[:] if p[1] == i]
         counter = len(temp_list_rs)
         for j in sentimento_tw:
             temp_list_tw = [r for r in temp_tw[:] if r[1] == j]
-            #print(temp_list_tw)
-            #print(temp_list_tw)
             #inter = [j for j in temp_list_rs if j in temp_list_tw]
-            inter = list(set(temp_list_rs).intersection(temp_list_tw))
-            #print(intesection)
-            p_x = len(inter)/counter
+            #inter = list(set(temp_list_rs).intersection(temp_list_tw))
+            inter = list(set(temp_list_rs) & set(temp_list_tw))
+            inter_count = len(inter)
+            print(inter_count)
+            p_x = inter_count/counter
             print(p_x)
             statistics.append(p_x)
             x_tw.append(j)
@@ -207,20 +205,20 @@ try:
 
 
     # raccolta parole non presenti nelle risorse lessicali
-    """for i in list(sentiment_rs):
-        word_rs = list(collection.aggregate(#prendo le risorse lessicali
-            [{"$match": {"source": "resources", "sentiment": i['_id']}}, {"$project": {"_id": 0, "word": 1}}]))
-        for k in word_rs:
-            list_rs.append(k["word"])
-    for j in sentiment_tw:
-        word_tw = list(collection.aggregate(#prendo le risorse di twitter
-            [{"$match": {"source": "twitter", "sentiment": j['_id']}}, {"$project": {"_id": 0, "word": 1}}]))
-        for k in word_tw:
-            list_tw.append(k["word"])
-        intersection = [x for x in list_tw if x not in list_rs]
-        with open(r'C:/Users/giann/Desktop/new_resources.txt', 'w') as fp:
-            fp.write(j['_id'] + ":" + "\n")
-            fp.write('\n'.join(intersection))"""
+
+    w_tw = []
+    w_ls = []
+
+    for i in sentimento_rs:
+        temp_list_rs = [p for p in temp_rs[:] if p[1] == i]
+        w_tw.append(temp_list_rs[0][0])
+    for j in sentimento_tw:
+        temp_list_tw = [r for r in temp_tw[:] if r[1] == j]
+        w_tw.append(temp_list_tw[0][0])
+        intersection = [x for x in w_tw if x not in w_ls]
+        with open("C:\\Users\\berna\\Desktop\\new_resources.txt", 'w', encoding="utf-8") as fp:
+            fp.write(j + ":" + "\n")
+            fp.write("\n".join(intersection))
 
     print("Connection Successful")
 
