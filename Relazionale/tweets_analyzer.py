@@ -84,15 +84,12 @@ try:
     cur.execute(create_script)
     temp = cur.fetchall()
     sentimento = np.unique([x[1] for x in temp[:]])
-    #print(temp[1][0])
-    #print(np.unique([x[1] for x in temp[:]]))
     for i in sentimento:
         temp_list = [x for x in temp[:] if x[1] == i]
         unique_string = ""
         for j in range(50):
             unique_string = unique_string + (temp_list[j][0]) + (" ")
-            #print(temp_list[j][0])
-        print(unique_string)
+
 
         word = WordCloud(width=1000, height=500, background_color='white', max_words=1000,
                               contour_color='#023075',
@@ -111,11 +108,6 @@ try:
 
     cur.execute(create_script)
     temp = cur.fetchall()
-    #print(temp)
-    print(temp[0][0][0])
-    #for i  in range(len(temp)):
-     #   for j in temp[i]:
-      #      print(j[i])
     for j in range(30):
         temp_list.append(str(temp[j][0][0]))
 
@@ -131,9 +123,7 @@ try:
                     'GROUP BY name ORDER BY COUNT(*) '
     cur.execute(create_script)
     temp = cur.fetchall()
-    #print(temp[2][0][1:-1])
     for j in range(40):
-        #print(temp[j][0][:])
         temp_list.append(str(temp[j][0][:]))
     unique_string = (" ").join(temp_list)
     wordcloud = WordCloud(
@@ -150,16 +140,14 @@ try:
     # ciclo per ogni sentimento di twitter prendo tutte le parole di twitter del sentimento selezionato, le metto in una lista
     # prendo le parole presenti nella lista delle risorse lessicali presenti anche nelle risorse twitter
 
-    create_script_rs = 'SELECT lexical_resource.words, lexical_resource.sentiments ' \
-                       'FROM sentiment join lexical_resource on sentiment.sentiments = lexical_resource.sentiments  '
+    create_script_rs = 'SELECT words, sentiments ' \
+                       'FROM lexical_resource '
     cur.execute(create_script_rs)
     temp_rs = cur.fetchall()
-    #print(temp_rs)
 
     create_script_tw = 'SELECT word.words, twitter_message.sentiments FROM word join  twitter_message on word.message = twitter_message.id '
     cur.execute(create_script_tw)
     temp_tw = cur.fetchall()
-    #print(temp_tw)
 
     statistics = []
 
@@ -167,28 +155,20 @@ try:
 
     sentimento_rs = np.unique([x[1] for x in temp_rs[:]])
     sentimento_tw = np.unique([x[1] for x in temp_tw[:]])
-    print(sentimento_tw)
-    print(sentimento_rs)
 
     for i in sentimento_rs:
-        temp_list_rs = [p for p in temp_rs[:] if p[1] == i]
+        temp_list_rs = [p[0] for p in temp_rs[:] if p[1] == i]
         counter = len(temp_list_rs)
         for j in sentimento_tw:
-            temp_list_tw = [r for r in temp_tw[:] if r[1] == j]
-            #inter = [j for j in temp_list_rs if j in temp_list_tw]
-            #inter = list(set(temp_list_rs).intersection(temp_list_tw))
-            inter = list(set(temp_list_rs) & set(temp_list_tw))
+            temp_list_tw = [r[0] for r in temp_tw[:] if r[1] == j]
+            inter = [j for j in temp_list_rs if j in temp_list_tw]
             inter_count = len(inter)
             print(inter_count)
             p_x = inter_count/counter
             print(p_x)
             statistics.append(p_x)
             x_tw.append(j)
-            #inter = []
-            #temp_list_tw = []
 
-
-        print("entrato")
         plt.bar(x_tw, statistics, align='center')  # A bar chart
         plt.ylim([0, 1])
         plt.xlabel('Twitter')
@@ -203,22 +183,21 @@ try:
         temp_list_rs = []
 
 
-
     # raccolta parole non presenti nelle risorse lessicali
 
     w_tw = []
     w_ls = []
-
+    temp_list_rs = []
+    temp_list_tw = []
     for i in sentimento_rs:
-        temp_list_rs = [p for p in temp_rs[:] if p[1] == i]
-        w_tw.append(temp_list_rs[0][0])
+        temp_list_rs = temp_list_rs + [p[0] for p in temp_rs[:] if p[1] == i]
     for j in sentimento_tw:
-        temp_list_tw = [r for r in temp_tw[:] if r[1] == j]
-        w_tw.append(temp_list_tw[0][0])
-        intersection = [x for x in w_tw if x not in w_ls]
-        with open("C:\\Users\\berna\\Desktop\\new_resources.txt", 'w', encoding="utf-8") as fp:
-            fp.write(j + ":" + "\n")
-            fp.write("\n".join(intersection))
+        temp_list_tw = [r[0] for r in temp_tw[:] if r[1] == j]
+        intersection = [x for x in temp_list_tw if x not in temp_list_rs]
+        with open("C:\\Users\\berna\\Desktop\\new_resources.txt", 'w') as fp:
+            for k in intersection:
+                fp.write(k)
+                fp.write('\n')
 
     print("Connection Successful")
 
